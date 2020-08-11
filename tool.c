@@ -6,8 +6,18 @@
 #include <uv.h>
 #include <curl/curl.h>
 
-char *proxy = NULL; // CURLOPT_PROXY
 void err_exit();
+
+char *proxy = NULL; // CURLOPT_PROXY
+uv_loop_t *event_loop;
+CURLM *multi_handle;
+uv_timer_t timeout;
+/* First you do a HELO handshake, then you just wait until timeout to check
+ * how long it takes for a SMTP inactive connection to timeout and store.
+ * This is just you verify if a bye was received *only* after N seconds, it
+ * may be because edgeMailer took too long and we should not rely on the 
+ * "fail" indicative
+ */
 
 typedef struct socket_controller {
 	/* TODO poll_handle description
@@ -27,16 +37,22 @@ socket_controller_t *create_controller() {
 	return controller;
 }
 
-void free_controller(void *arg) { // we cast to void ptr because this is called by a callback
+void free_controller( void *arg ) { // we cast to void ptr because this is called by a callback
 	socket_controller_t *controller = (socket_controller_t *) arg;
 	free(controller);
 	return;
 }
 
-void free_controller_callback(uv_handle_t *handle) {
+void free_controller_callback( uv_handle_t *handle ) {
 	free_controller(handle->data);
 	return;
 }
+
+void dispose_controller( socket_controller_t *controller ) {
+	uv_handle_t *uv_handle = (uv_handle_t *) &(controller->poll_handle);
+	uv_close(uv_handle, free_controller_callback);
+}
+
 
 int main( int argc, char *argv[] ) {
 	if ( argc > 0 ) {
@@ -50,7 +66,7 @@ int main( int argc, char *argv[] ) {
 	}
 }
 
-void err_exit(char *message) {
+void err_exit( char *message ) {
 	if ( message != NULL ) { // if caller specified custom message
 		printf("%s\n", message);
 	}
