@@ -54,7 +54,7 @@ void dispose_controller( socket_controller_t *controller ) {
 }
 
 
-void parse_state( CURLM *multi_handle ) {
+void parse_state() {
         // Start parsing the message based on a state machine
         int pending;
         CURLMsg *message;
