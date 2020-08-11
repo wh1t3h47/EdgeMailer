@@ -27,9 +27,15 @@ socket_controller_t *create_controller() {
 	return controller;
 }
 
-void free_controller(void *arg) { // we cast to void ptr because this is *ALSO* a callback
+void free_controller(void *arg) { // we cast to void ptr because this is called by a callback
 	socket_controller_t *controller = (socket_controller_t *) arg;
 	free(controller);
+	return;
+}
+
+void free_controller_callback(uv_handle_t *handle) {
+	free_controller(handle->data);
+	return;
 }
 
 int main( int argc, char *argv[] ) {
