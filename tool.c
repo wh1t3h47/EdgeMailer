@@ -54,6 +54,43 @@ void dispose_controller( socket_controller_t *controller ) {
 }
 
 
+void parse_state( CURLM *multi_handle ) {
+        // Start parsing the message based on a state machine
+        int pending;
+        CURLMsg *message;
+	message = curl_multi_info_read(multi_handle, &pending);
+	if (message == NULL) {
+		return;
+	}
+	do {
+		switch (message->msg) {
+			case CURLMSG_DONE :;
+			/* Do not use message data after calling 
+			 * curl_multi_remove_handle() and curl_easy_cleanup().
+			 * As per curl_multi_info_read() docs:
+			 * "WARNING: The data the returned pointer points to
+			 * will not survive calling curl_multi_cleanup,
+			 * curl_multi_remove_handle or curl_easy_cleanup."
+			 * You may want to copy the value into another place
+			 */
+					   CURL *easy = message->easy_handle;
+					   // We can call curl_easy_getinfo() to check which handle was done
+					   curl_multi_remove_handle(multi_handle, easy);
+					   easy = NULL;
+					   break;
+			case CURLMSG_LAST :
+					   printf("Last Msg\n"); //FIXME
+					   break;
+			case CURLMSG_NONE :
+					   printf("CurlMSg none\n"); //FIXME
+					   break;
+		}
+	} while (message != NULL);
+	return;
+}
+
+
+
 int main( int argc, char *argv[] ) {
 	if ( argc > 0 ) {
 		if ( argc == 1 ) { // First optional arg is proxy
@@ -70,12 +107,12 @@ void err_exit( char *message ) {
 	if ( message != NULL ) { // if caller specified custom message
 		printf("%s\n", message);
 	}
-	else if ( errno != 0 ) { // we don't wanne print "Success"
+	else if ( errno != 0 ) { // we don't want to print "Success"
 		char *msg;
 		msg = strerror(errno); // fetch error message
 		printf("%s\n", msg);
 	}
 	// FIXME Libuv clean up
 	// FIXME Libcurl clean up
-	exit(-1); // exit frees memory automagically
+	exit(-1); // NOTE: exit frees memory automagically
 }
