@@ -6,9 +6,9 @@
 #include <uv.h>
 #include <curl/curl.h>
 
-char *proxy = NULL;
+char *proxy = NULL; // CURLOPT_PROXY
 void err_exit();
-bool is_allocated;
+bool is_allocated = false; // if true, we need to free socket_controller
 
 typedef struct socket_controller {
 	/* TODO poll_handle description
@@ -34,7 +34,7 @@ int main( int argc, char *argv[] ) {
 void err_exit() {
 	if ( errno != 0 ) {
 		char *msg;
-		msg = strerror(errno);
+		msg = strerror(errno); // fetch error message
 		printf("%s\n", msg);
 	}
 	// FIXME Libuv clean up
