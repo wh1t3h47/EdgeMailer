@@ -85,6 +85,7 @@ void parse_state( CURLM *multi_handle ) {
 					   printf("CurlMSg none\n"); //FIXME
 					   break;
 		}
+		message = curl_multi_info_read(multi_handle, &pending);
 	} while (message != NULL);
 	return;
 }
