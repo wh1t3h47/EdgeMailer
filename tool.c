@@ -109,25 +109,25 @@ void do_request( curl_socket_t socket_fd, short event, void *arg ) {
         parse_state(multi_handle);
 }
 
-int timer_callback( CURLM *multi, long timeout, void *userp ) {
-	// function to be registered with CURLMOPT_TIMERFUNCTION
-	if(timeout_ms < 0) { // stop timer on timeout
-		uv_timer_stop(&timeout);
-	}
-	else {
-		if(timeout_ms == 0) {
-			timeout_ms = 10; // 0 means directly call socket_action
-		}                        // which is done a bit later
-		uv_timer_start(&timeout, on_timeout, timeout_ms, 0);
-	}
-	return 0;
-}
-
-void on_timeout_callback( evutil_socket_t socket_fd, short events, void *arg ) {
+void on_timeout_callback( uv_timer_t *req) {
         int running_handles;
 	// indicate to parse_state that we were timed out
         curl_multi_socket_action(multi_handle, CURL_SOCKET_TIMEOUT, 0, &running_handles);
         parse_state(multi_handle);
+}
+
+int timer_callback( CURLM *multi, long timeout_ms, void *userp ) {
+	// function to be registered with CURLMOPT_TIMERFUNCTION
+	if (timeout_ms < 0) { // stop timer on timeout
+		uv_timer_stop(&timeout);
+	}
+	else {
+		if (timeout_ms == 0) {
+			timeout_ms = 10; // 0 means directly call socket_action
+		}                        // which is done a bit later
+		uv_timer_start(&timeout, on_timeout_callback, timeout_ms, 0);
+	}
+	return 0;
 }
 
 int main( int argc, char *argv[] ) {
