@@ -1,2 +1,6 @@
 # Exclude test binary
 a.out
+# Exclude vim temporary files
+*~
+*.swp
+*.swo
