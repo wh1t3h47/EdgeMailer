@@ -90,7 +90,7 @@ void parse_state() {
 	return;
 }
 
-void do_request(curl_socket_t socket_fd, short event, void *arg) {
+void do_request( curl_socket_t socket_fd, short event, void *arg ) {
         // this function will kick in events and parse result states
 	// Input: arg -> socket_controller having information associated
 	// with a particular socket
@@ -101,14 +101,34 @@ void do_request(curl_socket_t socket_fd, short event, void *arg) {
         if (event & UV_READABLE) { // translate UV flags to curl
                 flags |= CURL_CSELECT_IN;
         }
-        if (event & UV_WRITABLE) { // this signals fd state to curl
+        if (event & UV_WRITABLE) { // signaling to and updating curl about each fd state change
                 flags |= CURL_CSELECT_OUT;
-        }
+        } // this is necessary in order to have the right flags in parse_state()
+	// tell libcurl what to do (as in event loop) based on each sockfd state
         curl_multi_socket_action(multi_handle, controller->socket_fd, flags, &running_handles);
         parse_state(multi_handle);
 }
 
+int timer_callback( CURLM *multi, long timeout, void *userp ) {
+	// function to be registered with CURLMOPT_TIMERFUNCTION
+	if(timeout_ms < 0) { // stop timer on timeout
+		uv_timer_stop(&timeout);
+	}
+	else {
+		if(timeout_ms == 0) {
+			timeout_ms = 10; // 0 means directly call socket_action
+		}                        // which is done a bit later
+		uv_timer_start(&timeout, on_timeout, timeout_ms, 0);
+	}
+	return 0;
+}
 
+void on_timeout_callback( evutil_socket_t socket_fd, short events, void *arg ) {
+        int running_handles;
+	// indicate to parse_state that we were timed out
+        curl_multi_socket_action(multi_handle, CURL_SOCKET_TIMEOUT, 0, &running_handles);
+        parse_state(multi_handle);
+}
 
 int main( int argc, char *argv[] ) {
 	if ( argc > 0 ) {
