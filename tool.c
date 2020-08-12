@@ -10,8 +10,8 @@ void err_exit();
 
 char *proxy = NULL; // CURLOPT_PROXY
 uv_loop_t *event_loop;
-CURLM *multi_handle;
-uv_timer_t timeout;
+CURLM *multi_handle; // allow multiple easy handles to be processed in batch
+uv_timer_t timeout; // timer handle user to schedule callbacks to be called in the future
 /* First you do a HELO handshake, then you just wait until timeout to check
  * how long it takes for a SMTP inactive connection to timeout and store.
  * This is just you verify if a bye was received *only* after N seconds, it
