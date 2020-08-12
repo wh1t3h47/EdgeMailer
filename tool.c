@@ -90,6 +90,24 @@ void parse_state() {
 	return;
 }
 
+void do_request(curl_socket_t socket_fd, short event, void *arg) {
+        // this function will kick in events and parse result states
+	// Input: arg -> socket_controller having information associated
+	// with a particular socket
+	socket_controller_t *controller = (socket_controller_t *) arg;
+        int running_handles;
+        int flags = 0;
+
+        if (event & UV_READABLE) { // translate UV flags to curl
+                flags |= CURL_CSELECT_IN;
+        }
+        if (event & UV_WRITABLE) { // this signals fd state to curl
+                flags |= CURL_CSELECT_OUT;
+        }
+        curl_multi_socket_action(multi_handle, controller->socket_fd, flags, &running_handles);
+        parse_state(multi_handle);
+}
+
 
 
 int main( int argc, char *argv[] ) {
