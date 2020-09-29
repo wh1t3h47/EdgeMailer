@@ -5,7 +5,6 @@ For now this will be just a libuv + libcurl template in which we can code on top
 ## Features:
 1. Uses libuv
 2. Because of libuv, we have a thread pool
-3. 1 comment for 3 lines is the least I could do to documento
 4. **Strict** C standards, no warning should be emitted with gcc -Wall
 
 ## How to compile:
